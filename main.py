@@ -1,13 +1,33 @@
+import os
 import discord
 from discord.ext import commands
-import os
-import re
-import asyncio
 from dotenv import load_dotenv
-from dank_data import REVERSE_KNOWLEDGE, ANAGRAM_KNOWLEDGE
-from keep_alive import keep_alive
-# Load the bot token.
+
+# Load environment variables
 load_dotenv()
+DEBUG_MODE = os.getenv('DEBUG_MODE', 'false').lower() == 'true'
+
+# ... (Existing bot setup and other code) ...
+
+# Inside your event listener / forwarding loop:
+async def forward_event(message, event_name, target_channel, role_id_to_ping, new_embed):
+    """
+    Handles event forwarding with DEBUG_MODE support.
+    """
+    if DEBUG_MODE:
+        # Debug trigger: All logic associated with sending is bypassed[span_0](start_span)[span_0](end_span)
+        print(f"[DEBUG] Event '{event_name}' captured from {message.channel.name}.")
+        print(f"[DEBUG] Forwarding to {target_channel.name} suppressed by DEBUG_MODE.")
+    else:
+        # Standard forwarding logic[span_1](start_span)[span_1](end_span)
+        forwarded_msg = await target_channel.send(content=f"<@&{role_id_to_ping}>", embed=new_embed)
+        
+        # Update global state trackers[span_2](start_span)[span_2](end_span)
+        ACTIVE_EVENTS_BY_MSG_ID[message.id] = forwarded_msg
+        ACTIVE_EVENTS_BY_CHANNEL_TITLE[(message.channel.id, event_name)] = forwarded_msg
+
+# ... (Rest of your main.py file) ...
+
 keep_alive()
 
 intents = discord.Intents.default()
