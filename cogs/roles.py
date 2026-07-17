@@ -1,30 +1,35 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 
-EXCLUDED_SERVER_ID = 1438233304867278870
-ALLOWED_USER_IDS = frozenset({
-    1379896339189596342, 853877922666512384, 483217929177923585,
-    957609809794977804, 951119258979532820, 1447906044029435945,
-    1472012262217617418, 1416771785348747384, 955802095276138576
-})
-PRIVATE_CHANNEL_NAMES = frozenset({"pvt1", "pvt2", "pvt3"})
-
-class Channels(commands.Cog):
+class Roles(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.Cog.listener()
-    async def on_member_join(self, member):
-        # Logic is strictly limited to member join permissions
-        if member.guild.id == EXCLUDED_SERVER_ID:
+    @commands.command(name="roleids", aliases=["giveroleid", "roleid"])
+    async def roleids_prefix(self, ctx, *, roles_data: str):
+        role_names = [r.strip().lower() for r in roles_data.split(',')]
+        found_roles = []
+        for r_name in role_names:
+            if not r_name: continue
+            r_id = None
+            if r_name.startswith('<@&') and r_name.endswith('>'):
+                try: r_id = int(r_name[3:-1])
+                except: pass
+            elif r_name.isdigit(): r_id = int(r_name)
+            role = ctx.guild.get_role(r_id) if r_id else discord.utils.find(lambda r: r.name.lower() == r_name, ctx.guild.roles)
+            if role and role not in found_roles: found_roles.append(role)
+        if not found_roles:
+            await ctx.send("❌ Could not find any roles matching your input.")
             return
-        if member.id in ALLOWED_USER_IDS:
-            for channel in member.guild.text_channels:
-                if channel.name in PRIVATE_CHANNEL_NAMES:
-                    try:
-                        await channel.set_permissions(member, read_messages=True, send_messages=True)
-                    except discord.Forbidden:
-                        pass
+        response = "\n".join([f"{role.name}: {role.id}" for role in found_roles])
+        await ctx.send(f"**Role IDs:**\n```\n{response}\n```")
+
+    @app_commands.command(name="roleids", description="Get the IDs of up to 5 roles")
+    async def roleids_slash(self, interaction: discord.Interaction, role1: discord.Role, role2: discord.Role = None, role3: discord.Role = None, role4: discord.Role = None, role5: discord.Role = None):
+        roles = [r for r in [role1, role2, role3, role4, role5] if r is not None]
+        response = "\n".join([f"{role.name}: {role.id}" for role in roles])
+        await interaction.response.send_message(f"**Role IDs:**\n```\n{response}\n```", ephemeral=True)
 
 async def setup(bot):
-    await bot.add_cog(Channels(bot))
+    await bot.add_cog(Roles(bot))
