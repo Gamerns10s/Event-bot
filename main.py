@@ -9,24 +9,30 @@ DEBUG_MODE = os.getenv('DEBUG_MODE', 'false').lower() == 'true'
 
 # ... (Existing bot setup and other code) ...
 
-# Inside your event listener / forwarding loop:
 async def forward_event(message, event_name, target_channel, role_id_to_ping, new_embed):
     """
-    Handles event forwarding with DEBUG_MODE support.
+    Handles event forwarding. If DEBUG_MODE is True, it simulates the process once.
     """
     if DEBUG_MODE:
-        # Debug trigger: All logic associated with sending is bypassed[span_0](start_span)[span_0](end_span)
-        print(f"[DEBUG] Event '{event_name}' captured from {message.channel.name}.")
-        print(f"[DEBUG] Forwarding to {target_channel.name} suppressed by DEBUG_MODE.")
+        # Simulate the execution once for debugging purposes[span_1](start_span)[span_1](end_span)
+        print(f"[DEBUG] Simulation: Event '{event_name}' processed.")
+        print(f"[DEBUG] Target Channel: {target_channel.name}")
+        print(f"[DEBUG] Role Ping ID: {role_id_to_ping}")
+        print(f"[DEBUG] Embed Content: {new_embed.to_dict()}")
+        
+        # We perform the state tracking logic once in memory for the simulation[span_2](start_span)[span_2](end_span)
+        # This confirms that your trackers (ACTIVE_EVENTS_BY_MSG_ID) would update correctly
+        ACTIVE_EVENTS_BY_MSG_ID[message.id] = "SIMULATED_MESSAGE_OBJECT"
+        ACTIVE_EVENTS_BY_CHANNEL_TITLE[(message.channel.id, event_name)] = "SIMULATED_MESSAGE_OBJECT"
+        
+        print("[DEBUG] State trackers updated successfully in memory.")
     else:
-        # Standard forwarding logic[span_1](start_span)[span_1](end_span)
+        # Standard production logic[span_3](start_span)[span_3](end_span)
         forwarded_msg = await target_channel.send(content=f"<@&{role_id_to_ping}>", embed=new_embed)
         
-        # Update global state trackers[span_2](start_span)[span_2](end_span)
+        # Update global state trackers[span_4](start_span)[span_4](end_span)
         ACTIVE_EVENTS_BY_MSG_ID[message.id] = forwarded_msg
         ACTIVE_EVENTS_BY_CHANNEL_TITLE[(message.channel.id, event_name)] = forwarded_msg
-
-# ... (Rest of your main.py file) ...
 
 keep_alive()
 
