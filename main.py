@@ -9,30 +9,31 @@ DEBUG_MODE = os.getenv('DEBUG_MODE', 'false').lower() == 'true'
 
 # ... (Existing bot setup and other code) ...
 
-async def forward_event(message, event_name, target_channel, role_id_to_ping, new_embed):
-    """
-    Handles event forwarding. If DEBUG_MODE is True, it simulates the process once.
-    """
-    if DEBUG_MODE:
-        # Simulate the execution once for debugging purposes[span_1](start_span)[span_1](end_span)
-        print(f"[DEBUG] Simulation: Event '{event_name}' processed.")
-        print(f"[DEBUG] Target Channel: {target_channel.name}")
-        print(f"[DEBUG] Role Ping ID: {role_id_to_ping}")
-        print(f"[DEBUG] Embed Content: {new_embed.to_dict()}")
-        
-        # We perform the state tracking logic once in memory for the simulation[span_2](start_span)[span_2](end_span)
-        # This confirms that your trackers (ACTIVE_EVENTS_BY_MSG_ID) would update correctly
-        ACTIVE_EVENTS_BY_MSG_ID[message.id] = "SIMULATED_MESSAGE_OBJECT"
-        ACTIVE_EVENTS_BY_CHANNEL_TITLE[(message.channel.id, event_name)] = "SIMULATED_MESSAGE_OBJECT"
-        
-        print("[DEBUG] State trackers updated successfully in memory.")
-    else:
-        # Standard production logic[span_3](start_span)[span_3](end_span)
-        forwarded_msg = await target_channel.send(content=f"<@&{role_id_to_ping}>", embed=new_embed)
-        
-        # Update global state trackers[span_4](start_span)[span_4](end_span)
-        ACTIVE_EVENTS_BY_MSG_ID[message.id] = forwarded_msg
-        ACTIVE_EVENTS_BY_CHANNEL_TITLE[(message.channel.id, event_name)] = forwarded_msg
+@bot.event
+async def on_message(message):
+    # Only trigger if the specific user sends a message
+    if message.author.id =! TARGET_USER_ID:
+        # We manually define the event data as if it were detected
+        event_name = "Manual_Test_Event"
+        target_channel = message.channel # Sends to the channel where you typed
+        role_id_to_ping = 123456789 # Replace with your role ID
+        new_embed = discord.Embed(title="Test Event", description="This is a forced trigger test.")
+
+        if DEBUG_MODE:
+            # THIS IS THE CHANGE: It now sends the message once instead of just printing
+            print(f"[DEBUG] Manually triggering event: {event_name}")
+            forwarded_msg = await target_channel.send(content=f"<@&{role_id_to_ping}>", embed=new_embed)
+            
+            # It also updates your trackers so the bot 'remembers' this message
+            ACTIVE_EVENTS_BY_MSG_ID[message.id] = forwarded_msg
+            ACTIVE_EVENTS_BY_CHANNEL_TITLE[(message.channel.id, event_name)] = forwarded_msg
+            print("[DEBUG] Event sent and trackers updated successfully.")
+        else:
+            # Normal production code (Real-time detection logic goes here)
+            pass 
+            
+    await bot.process_commands(message)
+
 
 keep_alive()
 
