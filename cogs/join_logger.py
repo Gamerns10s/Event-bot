@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 import io
 
-LOG_CHANNEL_ID = 1521584987361775849
+LOG_CHANNEL_ID = 1527932884478857297
 
 async def build_server_data(bot, guild: discord.Guild, is_fresh=False):
     # Check audit logs to find who added the bot.
